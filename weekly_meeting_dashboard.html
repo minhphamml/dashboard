@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Meeting Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+            padding: 30px;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .calendar-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-nav:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .calendar-day:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.today {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .calendar-day.has-meeting {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .calendar-day.has-meeting::after {
+            content: '•';
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 20px;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+
+        .day-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-bottom: 2px;
+        }
+
+        .meeting-form {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h5 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .meeting-history {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+        }
+
+        .meeting-entry {
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8fafc;
+            border-radius: 0 10px 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .meeting-entry:hover {
+            background: #e2e8f0;
+            transform: translateX(5px);
+        }
+
+        .meeting-date {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .meeting-topic {
+            margin-bottom: 8px;
+        }
+
+        .meeting-topic h6 {
+            color: var(--secondary-color);
+            margin-bottom: 5px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .person-report {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+        }
+
+        .person-report:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .person-name {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .person-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .year-restriction {
+            background: linear-gradient(135deg, var(--warning-color), var(--danger-color));
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .calendar-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .calendar-grid {
+                gap: 1px;
+            }
+            
+            .calendar-day {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1 class="mb-0"><i class="fas fa-calendar-alt me-3"></i>Weekly Meeting Dashboard</h1>
+            <p class="lead mb-0">Track your weekly progress and plan ahead</p>
+            <div class="year-restriction">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Note:</strong> This dashboard is restricted to year 2025 only
+            </div>
+        </div>
+
+        <!-- Calendar Section -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button class="calendar-nav" onclick="previousMonth()">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <h3 id="currentMonth" class="mb-0"></h3>
+                <button class="calendar-nav" onclick="nextMonth()">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Calendar will be generated here -->
+            </div>
+        </div>
+
+        <!-- Meeting Form Section -->
+        <div class="meeting-form" id="meetingForm" style="display: none;">
+            <h4 class="mb-4">
+                <i class="fas fa-users me-2"></i>Meeting Report for <span id="selectedDate"></span>
+            </h4>
+            
+            <form id="reportForm">
+                <div class="form-section">
+                    <h5><i class="fas fa-user me-2"></i>Your Name</h5>
+                    <input type="text" class="form-control" id="personName" 
+                           placeholder="Enter your full name..." required>
+                </div>
+
+                <div class="form-section">
+                    <h5><i class="fas fa-check-circle me-2"></i>1. What did you accomplish last week?</h5>
+                    <textarea class="form-control" id="lastWeekAccomplishments" rows="4" 
+                              placeholder="Describe what you completed or achieved last week..."></textarea>
+                </div>
+
+                <div class="form-section">
+                    <h5><i class="fas fa-arrow-right me-2"></i>2. What will you do next week?</h5>
+                    <textarea class="form-control" id="nextWeekPlans" rows="4" 
+                              placeholder="Outline your plans and goals for next week..."></textarea>
+                </div>
+
+                <div class="form-section">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>3. What issues do you have?</h5>
+                    <textarea class="form-control" id="currentIssues" rows="4" 
+                              placeholder="Describe any challenges, blockers, or issues you're facing..."></textarea>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Save Meeting Report
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="closeMeetingForm()">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- People List for Selected Date -->
+        <div class="meeting-form" id="peopleList" style="display: none;">
+            <h4 class="mb-4">
+                <i class="fas fa-users me-2"></i>Team Reports for <span id="selectedDatePeople"></span>
+            </h4>
+            
+            <div class="mb-3">
+                <button class="btn btn-success" onclick="showMeetingForm()">
+                    <i class="fas fa-plus me-2"></i>Add New Person
+                </button>
+            </div>
+            
+            <div id="peopleReports">
+                <!-- People reports will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Meeting History Section -->
+        <div class="meeting-history">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Meeting History
+                </h4>
+                <button class="btn btn-success" onclick="exportToExcel()" id="exportBtn">
+                    <i class="fas fa-file-excel me-2"></i>Export to Excel
+                </button>
+				
+				<input type="file" id="importExcel" accept=".xlsx, .xls" style="display:none" />
+				<button class="btn btn-primary ms-2" onclick="document.getElementById('importExcel').click()">
+					<i class="fas fa-file-import me-2"></i>Import from Excel
+				</button>
+
+            </div>
+            <div id="meetingHistory">
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-calendar-plus fa-3x mb-3"></i>
+                    <p>No meetings recorded yet. Click on a date to add your first meeting report!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // Calendar and meeting data
+		let now = new Date();
+		let currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+
+		// Force to year 2025 if out of range
+		if (currentDate.getFullYear() !== 2025) {
+			currentDate = new Date(2025, now.getMonth(), 1);
+		}
+        let meetingData = {};
+        let selectedDateStr = '';
+        let editingPerson = null;
+
+        // Restrict to year 2025 only
+        function isYear2025(date) {
+            return date.getFullYear() === 2025;
+        }
+
+        // Days of the week
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        // Initialize the calendar
+        function initCalendar() {
+            updateCalendarHeader();
+            generateCalendar();
+        }
+
+        function updateCalendarHeader() {
+            const monthYear = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+            document.getElementById('currentMonth').textContent = monthYear;
+        }
+
+        function generateCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Add day headers
+            dayNames.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.textContent = day;
+                grid.appendChild(dayHeader);
+            });
+
+            // Get first day of month and number of days
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            // Generate 42 days (6 weeks)
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = date.getDate();
+                
+                const dateStr = date.toISOString().split('T')[0];
+                
+                // Add classes for styling
+                if (date.getMonth() !== currentDate.getMonth()) {
+                    dayElement.classList.add('other-month');
+                }
+                
+                if (isToday(date)) {
+                    dayElement.classList.add('today');
+                }
+                
+                if (meetingData[dateStr]) {
+                    dayElement.classList.add('has-meeting');
+                }
+                
+                dayElement.addEventListener('click', () => selectDate(date));
+                grid.appendChild(dayElement);
+            }
+        }
+
+        function isToday(date) {
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getFullYear() === today.getFullYear();
+        }
+
+        function selectDate(date) {
+            // Only allow dates in 2025
+            if (!isYear2025(date)) {
+                alert('This dashboard is only available for year 2025.');
+                return;
+            }
+            
+            selectedDateStr = date.toISOString().split('T')[0];
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('selectedDate').textContent = formattedDate;
+            document.getElementById('selectedDatePeople').textContent = formattedDate;
+            
+            // Show people list if there are existing reports for this date
+            if (meetingData[selectedDateStr] && Object.keys(meetingData[selectedDateStr]).length > 0) {
+                showPeopleList();
+            } else {
+                showMeetingForm();
+            }
+        }
+
+        function showMeetingForm() {
+            document.getElementById('peopleList').style.display = 'none';
+            document.getElementById('meetingForm').style.display = 'block';
+            
+            // Reset form
+            document.getElementById('reportForm').reset();
+            editingPerson = null;
+            
+            document.getElementById('meetingForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showPeopleList() {
+            document.getElementById('meetingForm').style.display = 'none';
+            document.getElementById('peopleList').style.display = 'block';
+            
+            updatePeopleList();
+            document.getElementById('peopleList').scrollIntoView({ behavior: 'smooth' });
+        }
+		
+		function exportToExcel() {
+			if (Object.keys(meetingData).length === 0) {
+				alert('No meeting data to export.');
+				return;
+			}
+
+			const rows = [['Date', 'Person', 'Accomplishments', 'Plans', 'Issues', 'Timestamp']];
+
+			for (const date in meetingData) {
+				for (const person in meetingData[date]) {
+					const data = meetingData[date][person];
+					rows.push([
+						date,
+						person,
+						data.accomplishments || '',
+						data.plans || '',
+						data.issues || '',
+						new Date(data.timestamp).toLocaleString()
+					]);
+				}
+			}
+
+			const worksheet = XLSX.utils.aoa_to_sheet(rows);
+			const workbook = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(workbook, worksheet, 'Meeting History');
+
+			XLSX.writeFile(workbook, 'meeting_history.xlsx');
+		}
+		
+		document.getElementById('importExcel').addEventListener('change', function (e) {
+			const file = e.target.files[0];
+			if (!file) return;
+
+			const reader = new FileReader();
+			reader.onload = function (event) {
+				const data = new Uint8Array(event.target.result);
+				const workbook = XLSX.read(data, { type: 'array' });
+
+				const sheet = workbook.Sheets[workbook.SheetNames[0]];
+				const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+				if (rows.length < 2) {
+					alert("No data found in Excel file.");
+					return;
+				}
+
+				// Clear current meeting data
+				meetingData = {};
+
+				// Process rows
+				for (let i = 1; i < rows.length; i++) {
+					const [date, person, accomplishments, plans, issues, timestamp] = rows[i];
+					if (!date || !person) continue;
+
+					if (!meetingData[date]) meetingData[date] = {};
+					meetingData[date][person] = {
+						accomplishments: accomplishments || '',
+						plans: plans || '',
+						issues: issues || '',
+						timestamp: new Date(timestamp).toISOString()
+					};
+				}
+
+				generateCalendar();
+				updateMeetingHistory();
+				alert('Meeting data imported successfully.');
+			};
+
+			reader.readAsArrayBuffer(file);
+		});
+		
+		
+
+        function updatePeopleList() {
+            const container = document.getElementById('peopleReports');
+            
+            if (!meetingData[selectedDateStr] || Object.keys(meetingData[selectedDateStr]).length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-user-plus fa-3x mb-3"></i>
+                        <p>No reports for this date yet. Click "Add New Person" to start!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const people = Object.keys(meetingData[selectedDateStr]);
+            
+            container.innerHTML = people.map(personName => {
+                const data = meetingData[selectedDateStr][personName];
+                
+                return `
+                    <div class="person-report">
+                        <div class="person-name">
+                            <span><i class="fas fa-user me-2"></i>${personName}</span>
+                            <div class="person-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editPersonReport('${personName}')">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deletePersonReport('${personName}')">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${data.accomplishments ? `
+                            <div class="meeting-topic">
+                                <h6><i class="fas fa-check-circle me-2"></i>Accomplishments:</h6>
+                                <p class="mb-2">${data.accomplishments}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${data.plans ? `
+                            <div class="meeting-topic">
+                                <h6><i class="fas fa-arrow-right me-2"></i>Next Week Plans:</h6>
+                                <p class="mb-2">${data.plans}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${data.issues ? `
+                            <div class="meeting-topic">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Issues:</h6>
+                                <p class="mb-2">${data.issues}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Saved: ${new Date(data.timestamp).toLocaleString()}
+                        </small>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editPersonReport(personName) {
+            editingPerson = personName;
+            const data = meetingData[selectedDateStr][personName];
+            
+            document.getElementById('personName').value = personName;
+            document.getElementById('lastWeekAccomplishments').value = data.accomplishments || '';
+            document.getElementById('nextWeekPlans').value = data.plans || '';
+            document.getElementById('currentIssues').value = data.issues || '';
+            
+            showMeetingForm();
+        }
+
+        function deletePersonReport(personName) {
+            if (confirm(`Are you sure you want to delete ${personName}'s report?`)) {
+                delete meetingData[selectedDateStr][personName];
+                
+                // If no more people for this date, remove the date entry
+                if (Object.keys(meetingData[selectedDateStr]).length === 0) {
+                    delete meetingData[selectedDateStr];
+                }
+                
+                generateCalendar();
+                updateMeetingHistory();
+                
+                // Update the people list view
+                if (meetingData[selectedDateStr] && Object.keys(meetingData[selectedDateStr]).length > 0) {
+                    updatePeopleList();
+                } else {
+                    showMeetingForm();
+                }
+            }
+        }
+
+        function closeMeetingForm() {
+            document.getElementById('meetingForm').style.display = 'none';
+            document.getElementById('peopleList').style.display = 'none';
+            editingPerson = null;
+        }
+
+        function previousMonth() {
+            const newDate = new Date(currentDate);
+            newDate.setMonth(currentDate.getMonth() - 1);
+            
+            // Don't go before 2025
+            if (newDate.getFullYear() < 2025) {
+                return;
+            }
+            
+            currentDate = newDate;
+            updateCalendarHeader();
+            generateCalendar();
+        }
+
+        function nextMonth() {
+            const newDate = new Date(currentDate);
+            newDate.setMonth(currentDate.getMonth() + 1);
+            
+            // Don't go after 2025
+            if (newDate.getFullYear() > 2025) {
+                return;
+            }
+            
+            currentDate = newDate;
+            updateCalendarHeader();
+            generateCalendar();
+        }
+
+        // Form submission
+        document.getElementById('reportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const personName = document.getElementById('personName').value.trim();
+            const accomplishments = document.getElementById('lastWeekAccomplishments').value.trim();
+            const plans = document.getElementById('nextWeekPlans').value.trim();
+            const issues = document.getElementById('currentIssues').value.trim();
+            
+            if (!personName) {
+                alert('Please enter your name.');
+                return;
+            }
+            
+            if (!accomplishments && !plans && !issues) {
+                alert('Please fill in at least one section before saving.');
+                return;
+            }
+            
+            // Initialize date entry if it doesn't exist
+            if (!meetingData[selectedDateStr]) {
+                meetingData[selectedDateStr] = {};
+            }
+            
+            // Save the person's data
+            meetingData[selectedDateStr][personName] = {
+                accomplishments: accomplishments,
+                plans: plans,
+                issues: issues,
+                timestamp: new Date().toISOString()
+            };
+            
+            generateCalendar();
+            updateMeetingHistory();
+            showSuccessMessage(`Report saved successfully for ${personName}!`);
+            
+            // Show the people list for this date
+            setTimeout(() => {
+                showPeopleList();
+            }, 1000);
+        });
+
+        function showSuccessMessage(message = 'Meeting report saved successfully.') {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.innerHTML = `
+                <strong>Success!</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.dashboard-container').insertBefore(alert, document.querySelector('.calendar-container'));
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        function updateMeetingHistory() {
+            const historyContainer = document.getElementById('meetingHistory');
+            
+            if (Object.keys(meetingData).length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-plus fa-3x mb-3"></i>
+                        <p>No meetings recorded yet. Click on a date to add your first meeting report!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedDates = Object.keys(meetingData).sort((a, b) => new Date(b) - new Date(a));
+            
+            historyContainer.innerHTML = sortedDates.map(dateStr => {
+                const dateData = meetingData[dateStr];
+                const date = new Date(dateStr);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                const people = Object.keys(dateData);
+                const peopleCount = people.length;
+                
+                return `
+                    <div class="meeting-entry">
+                        <div class="meeting-date">
+                            <i class="fas fa-calendar me-2"></i>${formattedDate}
+                            <span class="badge bg-primary ms-2">${peopleCount} ${peopleCount === 1 ? 'Person' : 'People'}</span>
+                        </div>
+                        
+                        ${people.map(personName => {
+                            const data = dateData[personName];
+                            return `
+                                <div class="person-report mt-3">
+                                    <div class="person-name">
+                                        <span><i class="fas fa-user me-2"></i>${personName}</span>
+                                    </div>
+                                    
+                                    ${data.accomplishments ? `
+                                        <div class="meeting-topic">
+                                            <h6><i class="fas fa-check-circle me-2"></i>Accomplishments:</h6>
+                                            <p class="mb-1">${data.accomplishments}</p>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${data.plans ? `
+                                        <div class="meeting-topic">
+                                            <h6><i class="fas fa-arrow-right me-2"></i>Next Week Plans:</h6>
+                                            <p class="mb-1">${data.plans}</p>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${data.issues ? `
+                                        <div class="meeting-topic">
+                                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Issues:</h6>
+                                            <p class="mb-1">${data.issues}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                        
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editMeeting('${dateStr}')">
+                                <i class="fas fa-edit me-1"></i>Manage Reports
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteMeeting('${dateStr}')">
+                                <i class="fas fa-trash me-1"></i>Delete All
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editMeeting(dateStr) {
+            const date = new Date(dateStr);
+            selectDate(date);
+        }
+
+        function deleteMeeting(dateStr) {
+            if (confirm('Are you sure you want to delete ALL reports for this date?')) {
+                delete meetingData[dateStr];
+                generateCalendar();
+                updateMeetingHistory();
+            }
+        }
+
+        // Initialize the dashboard
+        initCalendar();
+        updateMeetingHistory();
+    </script>
+</body>
+</html>
